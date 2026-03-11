@@ -1,26 +1,65 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --primary: #1a57db;
+    --background-light: #f6f6f8;
+    --background-dark: #111621;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  html {
+    font-family: 'Inter', sans-serif;
+  }
+
+  body {
+    background-color: var(--background-light);
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  .dark body {
+    background-color: var(--background-dark);
+    color: #f1f5f9;
+  }
+
+  .wave-bg {
+    background: 
+      radial-gradient(circle at 20% 30%, rgba(26, 87, 219, 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(26, 87, 219, 0.08) 0%, transparent 40%);
+  }
+
+  .island-shape {
+    clip-path: polygon(20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%, 0% 20%);
+  }
+
+  /* Clases de color personalizadas */
+  .bg-primary {
+    background-color: var(--primary);
+  }
+  
+  .text-primary {
+    color: var(--primary);
+  }
+  
+  .border-primary {
+    border-color: var(--primary);
+  }
+
+  .bg-background-light {
+    background-color: var(--background-light);
+  }
+
+  .dark .bg-background-dark {
+    background-color: var(--background-dark);
+  }
+
+  .text-background-light {
+    color: var(--background-light);
+  }
+
+  .dark .text-background-dark {
+    color: var(--background-dark);
+  }
 }
