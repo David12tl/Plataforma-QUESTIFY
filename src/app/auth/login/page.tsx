@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client'; // Tu cliente configurado
+import { createClient } from '@/utils/supabase/client';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 
@@ -25,9 +25,9 @@ const LoginPage = () => {
       });
 
       if (authError) throw authError;
+      if (!authData.user) throw new Error("No se pudo obtener el usuario.");
 
-      // 2. Obtener rol desde tu tabla 'usuarios'
-      // Usamos id_auth porque es la llave que vincula con auth.users
+      // 2. Obtener rol desde la tabla 'usuarios' usando el ID de Auth
       const { data: userData, error: userError } = await supabase
         .from('usuarios')
         .select(`
@@ -40,8 +40,8 @@ const LoginPage = () => {
 
       if (userError) throw userError;
       
-      // Accedemos al nombre del rol (asegurando el tipo con any)
-      const rol = (userData?.roles as any)?.nombre_rol;
+      // Acceso seguro al nombre del rol
+      const rol = (userData?.roles as { nombre_rol: string } | undefined)?.nombre_rol;
 
       if (!rol) {
         await supabase.auth.signOut();
@@ -49,17 +49,16 @@ const LoginPage = () => {
       }
 
       // 3. Redirección basada en el rol
+      // Usamos replace para evitar que el usuario vuelva atrás al login tras iniciar sesión
       if (rol === 'Profesor') {
-        router.push('/sistema/profesor');
+        router.replace('/sistema/profesor');
       } else if (rol === 'Alumno') {
-        router.push('/sistema/alumno');
+        router.replace('/sistema/alumno');
       } else {
-        router.push('/sistema/dashboard');
+        router.replace('/sistema/dashboard');
       }
 
-      // Refrescamos para que el sistema detecte la nueva sesión
-      router.refresh();
-
+      // No es estrictamente necesario router.refresh() aquí si usas router.replace
     } catch (err: any) {
       console.error("Error al iniciar sesión:", err);
       alert(err.message || "Error al iniciar sesión");
@@ -80,7 +79,7 @@ const LoginPage = () => {
               placeholder="Correo electrónico"
               required
               value={email}
-              className="h-14 w-full border-2 border-[#1c1917] px-4 outline-none"
+              className="h-14 w-full border-2 border-[#1c1917] px-4 outline-none focus:border-[#f97316]"
               onChange={(e) => setEmail(e.target.value)}
             />
             <input 
@@ -88,7 +87,7 @@ const LoginPage = () => {
               placeholder="Contraseña"
               required
               value={password}
-              className="h-14 w-full px-4 border-2 border-[#1c1917] outline-none"
+              className="h-14 w-full px-4 border-2 border-[#1c1917] outline-none focus:border-[#f97316]"
               onChange={(e) => setPassword(e.target.value)}
             />
             <button 
