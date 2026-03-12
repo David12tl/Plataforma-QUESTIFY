@@ -2,12 +2,12 @@
 'use client';
 
 import { useEffect } from 'react';
-import Navbar from './app/components/layout/Navbar';  // Cambiado: @/components/layout/Navbar → ./components/layout/Navbar
-import HeroSection from './app/components/sections/HeroSection';  // Cambiado
-import FeaturesSection from './app/components/sections/FeatureSection';  // Cambiado
-import StatsSection from './app/components/sections/StatsSection';  // Cambiado
-import CTASection from './app/components/sections/CTASection';  // Cambiado
-import Footer from './app/components/layout/Footer';  // Cambiado
+import Navbar from './components/layout/Navbar';  // Cambiado: @/components/layout/Navbar → ./components/layout/Navbar
+import HeroSection from './components/sections/HeroSection';  // Cambiado
+import FeaturesSection from './components/sections/FeatureSection';  // Cambiado
+import StatsSection from './components/sections/StatsSection';  // Cambiado
+import CTASection from './components/sections/CTASection';  // Cambiado
+import Footer from './components/layout/Footer';  // Cambiado
 
 export default function Home() {
   useEffect(() => {
