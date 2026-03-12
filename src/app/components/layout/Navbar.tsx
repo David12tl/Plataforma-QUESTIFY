@@ -34,7 +34,7 @@ const Navbar = () => {
         </Link>
 
         {/* Botón Entrar (Dashboard) */}
-        <Link href="/dashboard" className="bg-[#1c1917] text-white font-black px-6 py-2 uppercase border-2 border-[#1c1917] hover:bg-[#f97316] transition-colors text-sm">
+        <Link href="/sistema" className="bg-[#1c1917] text-white font-black px-6 py-2 uppercase border-2 border-[#1c1917] hover:bg-[#f97316] transition-colors text-sm">
           Entrar
         </Link>
         
