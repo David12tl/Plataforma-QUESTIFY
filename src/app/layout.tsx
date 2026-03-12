@@ -1,38 +1,31 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-// 1. Importa tu provider
 import { PerfilProvider } from './context/PerfilContext'; 
 
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
-});
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'TaskMaster - Master Your Workflow',
-  description: 'Navigate your daily tasks with serene clarity.',
+  title: 'TaskMaster',
+  description: 'Dominando el flujo de trabajo.',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+// Configuración importante para dispositivos móviles
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: 'cover', // Esto permite que el sitio ocupe toda la pantalla incluyendo el notch
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="light" suppressHydrationWarning>
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body 
-        className={`${inter.className} antialiased`} 
-        suppressHydrationWarning={true}
-      >
-        {/* 2. Envolvemos la aplicación con el provider */}
+    <html lang="es" className="light">
+      <link 
+  rel="stylesheet" 
+  href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" 
+/>
+      <body className={`${inter.className} antialiased min-h-screen`}>
         <PerfilProvider>
           {children}
         </PerfilProvider>

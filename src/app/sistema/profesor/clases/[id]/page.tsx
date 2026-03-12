@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import Sidebar from '../../../../components/profesor/NavBar_Profesor';
 import Image from 'next/image';
 
 // --- Interfaces para Tipado Estricto ---
@@ -15,6 +14,7 @@ interface Clase {
 
 interface Tarea {
   id_tarea: number;
+  id_clase: number;
   titulo: string;
   descripcion: string | null;
   fecha_limite: string | null;
@@ -41,7 +41,6 @@ export default function ClaseDetallePage() {
     estado: 'pendiente'
   });
 
-  // 1. fetchData con useCallback para evitar errores de dependencias
   const fetchData = useCallback(async () => {
     if (!idClase) return;
     setLoading(true);
@@ -70,9 +69,7 @@ export default function ClaseDetallePage() {
   const closeModal = () => {
     setIsTaskModalOpen(false);
     setTaskToEdit(null);
-    setTaskData({ 
-      titulo: '', descripcion: '', fecha_limite: '', prioridad: 'media', estado: 'pendiente' 
-    });
+    setTaskData({ titulo: '', descripcion: '', fecha_limite: '', prioridad: 'media', estado: 'pendiente' });
   };
 
   const openCreateModal = () => {
@@ -102,7 +99,6 @@ export default function ClaseDetallePage() {
 
   const handleSaveTask = async () => {
     if (!taskData.titulo) return alert("Título obligatorio.");
-    
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return alert("Error de sesión.");
 
@@ -138,7 +134,6 @@ export default function ClaseDetallePage() {
       }]);
       if (error) alert("Error: " + error.message);
     }
-
     closeModal();
     fetchData();
   };
@@ -146,71 +141,63 @@ export default function ClaseDetallePage() {
   if (loading) return <div className="p-10 text-center font-black uppercase tracking-widest animate-pulse">Cargando Clase...</div>;
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-slate-50 font-syne">
-      <Sidebar />
-      <main className="flex-1 p-4 md:p-8 w-full overflow-x-hidden">
-        
-        {/* Banner de Clase Responsivo */}
-        <div className="relative w-full h-48 md:h-64 border-4 border-[#1c1917] bg-white mb-8 overflow-hidden shadow-[6px_6px_0px_0px_#1c1917]">
-          {clase?.imagen_url ? (
-            <Image src={clase.imagen_url} alt="Portada" fill className="object-cover" priority />
-          ) : (
-            <div className="w-full h-full bg-slate-200 flex items-center justify-center font-black">SIN PORTADA</div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-          <h1 className="absolute bottom-4 left-4 md:bottom-8 md:left-8 text-2xl md:text-5xl font-black uppercase text-white tracking-tighter">
-            {clase?.nombre_materia || 'Materia'}
-          </h1>
-        </div>
+    <div className="w-full">
+      {/* Banner de Clase */}
+      <div className="relative w-full h-48 md:h-64 border-4 border-[#1c1917] bg-white mb-8 overflow-hidden shadow-[6px_6px_0px_0px_#1c1917]">
+        {clase?.imagen_url ? (
+          <Image src={clase.imagen_url} alt="Portada" fill className="object-cover" priority />
+        ) : (
+          <div className="w-full h-full bg-slate-200 flex items-center justify-center font-black">SIN PORTADA</div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+        <h1 className="absolute bottom-4 left-4 md:bottom-8 md:left-8 text-2xl md:text-5xl font-black uppercase text-white tracking-tighter">
+          {clase?.nombre_materia || 'Materia'}
+        </h1>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-          {/* Listado de Tareas */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex justify-between items-center border-b-4 border-[#1c1917] pb-2">
-              <h2 className="text-xl md:text-2xl font-black uppercase">Actividades ({tareas.length})</h2>
-              <button onClick={openCreateModal} className="lg:hidden bg-[#1c1917] text-white px-4 py-2 font-black text-xs uppercase shadow-[4px_4px_0px_0px_#f97316]">
-                + Añadir
-              </button>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="flex justify-between items-center border-b-4 border-[#1c1917] pb-2">
+            <h2 className="text-xl md:text-2xl font-black uppercase">Actividades ({tareas.length})</h2>
+            <button onClick={openCreateModal} className="lg:hidden bg-[#1c1917] text-white px-4 py-2 font-black text-xs uppercase shadow-[4px_4px_0px_0px_#f97316]">
+              + Añadir
+            </button>
+          </div>
 
-            {tareas.length > 0 ? (
-              tareas.map((t) => (
-                <div key={t.id_tarea} className="bg-white border-2 border-[#1c1917] p-4 shadow-[4px_4px_0px_0px_#1c1917] flex flex-col sm:flex-row justify-between sm:items-center gap-4 transition-all hover:translate-x-1">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-[8px] font-black px-2 py-0.5 uppercase border ${t.prioridad === 'alta' ? 'bg-red-100 text-red-600 border-red-600' : 'bg-slate-100 border-slate-400'}`}>
-                        {t.prioridad}
-                      </span>
-                      <span className="text-[10px] font-bold text-slate-400">{t.fecha_limite || 'Sin fecha'}</span>
-                    </div>
-                    <h3 className="font-black uppercase text-lg leading-tight">{t.titulo}</h3>
-                    <p className="text-sm text-slate-500 line-clamp-2 mt-1">{t.descripcion}</p>
+          {tareas.length > 0 ? (
+            tareas.map((t) => (
+              <div key={t.id_tarea} className="bg-white border-2 border-[#1c1917] p-4 shadow-[4px_4px_0px_0px_#1c1917] flex flex-col sm:flex-row justify-between sm:items-center gap-4 transition-all hover:translate-x-1">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-[8px] font-black px-2 py-0.5 uppercase border ${t.prioridad === 'alta' ? 'bg-red-100 text-red-600 border-red-600' : 'bg-slate-100 border-slate-400'}`}>
+                      {t.prioridad}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400">{t.fecha_limite || 'Sin fecha'}</span>
                   </div>
-                  
-                  <div className="flex sm:flex-col md:flex-row gap-2">
-                    <button onClick={() => openEditModal(t)} className="flex-1 sm:flex-none bg-[#1c1917] text-white px-4 py-2 font-black text-[10px] uppercase hover:bg-orange-600 transition-colors">Editar</button>
-                    <button onClick={() => handleDeleteTask(t.id_tarea)} className="bg-white border-2 border-[#1c1917] text-[#1c1917] px-3 py-2 font-black text-[10px] uppercase hover:bg-red-50 transition-colors">Eliminar</button>
-                  </div>
+                  <h3 className="font-black uppercase text-lg leading-tight">{t.titulo}</h3>
+                  <p className="text-sm text-slate-500 line-clamp-2 mt-1">{t.descripcion}</p>
                 </div>
-              ))
-            ) : (
-              <div className="p-10 border-4 border-dashed border-slate-200 text-center font-black text-slate-300 uppercase">Aún no hay tareas publicadas</div>
-            )}
-          </div>
-
-          {/* Panel Lateral (Desktop) / Botón Superior (Mobile) */}
-          <div className="hidden lg:block">
-            <div className="sticky top-8 bg-[#f97316] p-6 border-4 border-[#1c1917] shadow-[8px_8px_0px_0px_#1c1917]">
-              <h3 className="font-black text-white text-xl uppercase mb-4">Acciones Rápidas</h3>
-              <button onClick={openCreateModal} className="w-full bg-[#1c1917] text-white py-4 font-black uppercase hover:scale-[1.02] transition-transform active:scale-95 shadow-lg">
-                + Crear Nueva Tarea
-              </button>
-              <p className="text-[10px] text-orange-900 font-bold uppercase mt-4 text-center">Gestiona el progreso de tus alumnos desde aquí</p>
-            </div>
-          </div>
+                <div className="flex sm:flex-col md:flex-row gap-2">
+                  <button onClick={() => openEditModal(t)} className="flex-1 sm:flex-none bg-[#1c1917] text-white px-4 py-2 font-black text-[10px] uppercase hover:bg-orange-600 transition-colors">Editar</button>
+                  <button onClick={() => handleDeleteTask(t.id_tarea)} className="bg-white border-2 border-[#1c1917] text-[#1c1917] px-3 py-2 font-black text-[10px] uppercase hover:bg-red-50 transition-colors">Eliminar</button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-10 border-4 border-dashed border-slate-200 text-center font-black text-slate-300 uppercase">Aún no hay tareas publicadas</div>
+          )}
         </div>
 
-        {/* Modal Responsivo */}
+        <div className="hidden lg:block">
+          <div className="sticky top-8 bg-[#f97316] p-6 border-4 border-[#1c1917] shadow-[8px_8px_0px_0px_#1c1917]">
+            <h3 className="font-black text-white text-xl uppercase mb-4">Acciones Rápidas</h3>
+            <button onClick={openCreateModal} className="w-full bg-[#1c1917] text-white py-4 font-black uppercase hover:scale-[1.02] transition-transform active:scale-95 shadow-lg">
+              + Crear Nueva Tarea
+            </button>
+          </div>
+        </div>
+      </div>
+      {/* Modal Responsivo */}
         {isTaskModalOpen && (
           <div className="fixed inset-0 bg-[#1c1917]/90 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
             <div className="bg-white p-6 md:p-8 border-4 border-[#1c1917] w-full max-w-lg shadow-[12px_12px_0px_0px_#f97316] max-h-[90vh] overflow-y-auto">
@@ -253,7 +240,6 @@ export default function ClaseDetallePage() {
             </div>
           </div>
         )}
-      </main>
     </div>
   );
 }

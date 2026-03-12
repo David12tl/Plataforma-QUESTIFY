@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react'; // Eliminamos hooks no usados
+import React from 'react';
 
-// 1. Definimos la interfaz global para que TypeScript la reconozca en todas partes
+// 1. Definimos la interfaz global
 interface Feature {
   icon: string;
   title: string;
@@ -19,29 +19,24 @@ const features: Feature[] = [
   { icon: 'lock', title: 'Seguridad', description: 'Cifrado de extremo a extremo garantizado.', color: '#6366f1' },
 ];
 
-// 2. Componente de tarjeta con las props correctamente tipadas
 const FeatureCard = ({ feature, index }: { feature: Feature, index: number }) => {
   return (
     <div
-      style={{
-        transition: `all 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${index * 100}ms`,
-      }}
+      style={{ transition: `all 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${index * 100}ms` }}
       className="bg-white border-2 border-[#1c1917] p-8 relative transition-all group overflow-hidden"
     >
-      {/* DEGRADADO DE FONDO (Visible al hacer hover) */}
       <div 
         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         style={{ background: `linear-gradient(135deg, ${feature.color}15 0%, #ffffff 100%)` }}
       />
 
-      {/* Icono */}
       <div className="relative w-12 h-12 border-2 border-[#1c1917] flex items-center justify-center mb-6 bg-white z-10">
+        {/* Aquí es donde Material Symbols debe activarse */}
         <span className="material-symbols-outlined text-2xl" style={{ color: feature.color }}>
           {feature.icon}
         </span>
       </div>
 
-      {/* Título y descripción (Z-index alto para asegurar legibilidad) */}
       <h3 className="relative text-xl font-black text-[#1c1917] mb-3 uppercase tracking-tight z-10">
         {feature.title}
       </h3>
@@ -49,13 +44,11 @@ const FeatureCard = ({ feature, index }: { feature: Feature, index: number }) =>
         {feature.description}
       </p>
 
-      {/* SOMBRA DESPLAZADA */}
       <div className="absolute top-2 left-2 w-full h-full border-2 border-[#1c1917] -z-0 bg-[#f97316] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
     </div>
   );
 };
 
-// 3. Componente principal
 const FeaturesSection = () => {
   return (
     <section className="px-6 md:px-20 py-24 bg-[#f8f9fa] border-t-4 border-[#1c1917]">
