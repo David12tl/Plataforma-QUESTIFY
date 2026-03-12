@@ -1,18 +1,24 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 
+// 1. Definimos una interfaz clara para el rol esperado
+interface RolData {
+  roles: {
+    nombre_rol: string;
+  } | null;
+}
+
 export default async function SistemaPage() {
-  // 1. Inicializamos el cliente de servidor (SSR)
   const supabase = await createClient();
 
   // 2. Obtenemos el usuario autenticado
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login');
+    redirect('/auth/login?mensaje=Debes iniciar sesión para acceder al sistema');
   }
 
-  // 3. Consultamos el rol en la base de datos
+  // 3. Consultamos el rol usando la interfaz definida
   const { data: userData, error } = await supabase
     .from('usuarios')
     .select(`
@@ -23,19 +29,19 @@ export default async function SistemaPage() {
 
   if (error || !userData) {
     console.error("Error al obtener rol:", error);
-    redirect('/login'); // O a una página de 'error-de-permisos'
+    redirect('/auth/login?mensaje=Error al verificar permisos');
   }
 
-  // 4. Normalizamos el rol
-  const rol = (userData.roles as any)?.nombre_rol;
+  // 4. Extraemos el rol de forma segura (sin 'any')
+  const rolData = userData as unknown as RolData;
+  const nombreRol = rolData.roles?.nombre_rol;
 
   // 5. Redirección basada en el rol
-  if (rol === 'Profesor') {
+  if (nombreRol === 'Profesor') {
     redirect('/sistema/profesor');
-  } else if (rol === 'Alumno') {
+  } else if (nombreRol === 'Alumno') {
     redirect('/sistema/alumno');
   } else {
-    // Si el usuario no tiene rol asignado, lo sacamos del sistema
-    redirect('/login');
+    redirect('/auth/login?mensaje=Rol de usuario no reconocido');
   }
 }
