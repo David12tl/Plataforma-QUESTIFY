@@ -4,14 +4,34 @@ import React, { useEffect, useState } from 'react';
 import Sidebar from '../../../components/profesor/NavBar_Profesor';
 import { createClient } from '@/utils/supabase/client';
 
+// 1. Estructura exacta de lo que devuelve Supabase en la consulta compleja
+interface SupabaseTareaResponse {
+  id_tarea: string;
+  titulo: string;
+  id_clase: string;
+  entregas: { count: number }[];
+  clases: {
+    inscripciones: { count: number }[];
+  } | null;
+}
+
+// 2. Estructura para el estado local
+interface TareaProcesada {
+  id_tarea: string;
+  titulo: string;
+  id_clase: string;
+  totalEntregas: number;
+  totalAlumnos: number;
+}
+
 export default function AnnouncementsPage() {
-  const [tareasProgreso, setTareasProgreso] = useState<any[]>([]);
+  const [tareasProgreso, setTareasProgreso] = useState<TareaProcesada[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
   useEffect(() => {
     async function loadData() {
-      // Consultamos tareas y sus relaciones
+      // 3. Tipamos el resultado de la query para eliminar el error de la línea 45
       const { data, error } = await supabase
         .from('tareas')
         .select(`
@@ -22,23 +42,22 @@ export default function AnnouncementsPage() {
           clases(
             inscripciones(count)
           )
-        `);
+        `) as { data: SupabaseTareaResponse[] | null; error: Error | null };
 
       if (error) {
         console.error("Error cargando actividades:", error);
       } else if (data) {
-        // Mapeo seguro con validación de tipos
-        const procesado = data.map((t: any) => {
-          // Extraer entregas: supabase devuelve un arreglo de objetos [{count: ...}]
-          const entregas = t.entregas?.[0]?.count || 0;
-          
-          // Extraer inscripciones: acceden a clases -> arreglo de inscripciones
-          const inscripciones = t.clases?.inscripciones?.[0]?.count || 0;
+        // 4. Mapeo seguro: Eliminamos el 'any' de la línea 54
+        const procesado: TareaProcesada[] = data.map((t: SupabaseTareaResponse) => {
+          const entregasCount = t.entregas?.[0]?.count || 0;
+          const inscripcionesCount = t.clases?.inscripciones?.[0]?.count || 0;
 
           return {
-            ...t,
-            totalEntregas: Number(entregas),
-            totalAlumnos: Number(inscripciones)
+            id_tarea: t.id_tarea,
+            titulo: t.titulo,
+            id_clase: t.id_clase,
+            totalEntregas: Number(entregasCount),
+            totalAlumnos: Number(inscripcionesCount)
           };
         });
         setTareasProgreso(procesado);
@@ -50,46 +69,63 @@ export default function AnnouncementsPage() {
   }, [supabase]);
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex flex-col md:flex-row min-h-screen bg-slate-50 font-syne">
       <Sidebar />
-      <main className="flex-1 p-8">
-        <h2 className="text-4xl font-black uppercase font-syne mb-10">Actividades y Entregas</h2>
+      
+      <main className="flex-1 p-4 md:p-8 w-full max-w-full overflow-x-hidden">
+        <header className="mb-8 md:mb-10">
+          <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-[#1c1917]">
+            Actividades y Entregas
+          </h2>
+          <p className="text-slate-500 text-sm font-bold uppercase mt-1">Monitoreo de rendimiento</p>
+        </header>
         
         {loading ? (
-          <p className="font-bold">Cargando actividades...</p>
+          <div className="flex items-center gap-3">
+             <div className="animate-spin size-5 border-4 border-[#f97316] border-t-transparent rounded-full"></div>
+             <p className="font-bold text-slate-600 uppercase text-xs tracking-widest">Cargando...</p>
+          </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {tareasProgreso.length > 0 ? (
-              tareasProgreso.map((t) => (
-                <div key={t.id_tarea} className="bg-white border-2 border-[#1c1917] p-6 shadow-[4px_4px_0px_0px_#1c1917]">
-                  <div className="flex justify-between items-start">
-                    <span className={`text-[10px] font-black uppercase px-2 py-1 ${
-                      t.totalEntregas === t.totalAlumnos && t.totalAlumnos > 0 
-                      ? 'bg-emerald-600 text-white' 
-                      : 'bg-[#1c1917] text-white'
-                    }`}>
-                      {t.totalEntregas === t.totalAlumnos && t.totalAlumnos > 0 ? 'COMPLETADO' : 'EN CURSO'}
-                    </span>
-                    <span className="text-xs font-black text-slate-500">
-                      {t.totalEntregas} / {t.totalAlumnos} Entregas recibidas
-                    </span>
+              tareasProgreso.map((t) => {
+                const porcentaje = t.totalAlumnos > 0 ? (t.totalEntregas / t.totalAlumnos) * 100 : 0;
+                const isComplete = t.totalEntregas === t.totalAlumnos && t.totalAlumnos > 0;
+
+                return (
+                  <div key={t.id_tarea} className="bg-white border-2 border-[#1c1917] p-5 md:p-6 shadow-[4px_4px_0px_0px_#1c1917]">
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+                      <span className={`text-[10px] font-black uppercase px-2 py-1 border border-[#1c1917] ${
+                        isComplete ? 'bg-emerald-500 text-white' : 'bg-[#1c1917] text-white'
+                      }`}>
+                        {isComplete ? 'COMPLETADO' : 'EN CURSO'}
+                      </span>
+                      <span className="text-[11px] md:text-xs font-black text-slate-500 uppercase">
+                        {t.totalEntregas} / {t.totalAlumnos} Entregas
+                      </span>
+                    </div>
+                    
+                    <h3 className="text-lg md:text-xl font-black uppercase mt-3 leading-tight">{t.titulo}</h3>
+                    
+                    <div className="mt-5">
+                      <div className="flex justify-between items-end mb-1">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Progreso</span>
+                        <span className="text-[10px] font-black text-[#1c1917]">{Math.round(porcentaje)}%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-4 border-2 border-[#1c1917]">
+                        <div 
+                          className="bg-[#f97316] h-full transition-all duration-700 ease-out" 
+                          style={{ width: `${porcentaje}%` }}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  
-                  <h3 className="text-xl font-black uppercase mt-2">{t.titulo}</h3>
-                  
-                  {/* Barra de progreso visual */}
-                  <div className="w-full bg-slate-200 h-2 mt-4 border border-[#1c1917]">
-                    <div 
-                      className="bg-[#f97316] h-full transition-all duration-500" 
-                      style={{ width: `${t.totalAlumnos > 0 ? (t.totalEntregas / t.totalAlumnos) * 100 : 0}%` }}
-                    />
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
-              <p className="text-slate-500 font-bold border-2 border-dashed p-6 text-center">
-                No hay actividades publicadas actualmente.
-              </p>
+              <div className="bg-white border-2 border-dashed border-slate-300 p-12 text-center">
+                <p className="text-slate-400 font-bold uppercase text-sm">No hay tareas pendientes</p>
+              </div>
             )}
           </div>
         )}
