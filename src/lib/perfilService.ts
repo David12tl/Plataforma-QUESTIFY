@@ -1,37 +1,34 @@
-import { supabase } from "./supabase";
+import { createClient } from '@/utils/supabase/client';
 
 export interface PerfilUsuario {
-  id_usuario: string; // Tu UUID interno
+  id_usuario: string;
   nombre_usuario: string;
   email: string;
   id_rol: number | null;
-  id_auth: string; // El UUID de Supabase Auth
+  id_auth: string;
 }
 
 export async function obtenerPerfilUsuario(): Promise<PerfilUsuario | null> {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
 
-  if (sessionError || !session?.user) {
-    return null;
-  }
+  if (!session?.user) return null;
 
-  // Usamos el ID del usuario de la sesión para encontrar su perfil en 'usuarios'
-  const { data, error } = await supabase
-    .from("usuarios")
-    .select(`
-      id_usuario,
-      nombre_usuario,
-      email,
-      id_rol,
-      id_auth
-    `)
-    .eq("id_auth", session.user.id) // <--- Esta es la clave
+  // Intentar primero en alumnos
+  const { data: alumno } = await supabase
+    .from("alumnos")
+    .select("*")
+    .eq("id_auth", session.user.id)
     .maybeSingle();
 
-  if (error) {
-    console.error("Error en consulta de perfil:", error);
-    return null;
-  }
+  if (alumno) return alumno as PerfilUsuario;
 
-  return data as PerfilUsuario | null;
+  // Si no, intentar en profesores
+  const { data: profesor } = await supabase
+    .from("profesores")
+    .select("*")
+    .eq("id_auth", session.user.id)
+    .maybeSingle();
+
+  return profesor ? (profesor as PerfilUsuario) : null;
 }

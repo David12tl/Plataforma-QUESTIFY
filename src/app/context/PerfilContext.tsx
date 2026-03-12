@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { obtenerPerfilUsuario, PerfilUsuario } from '../../lib/perfilService';
-import { supabase } from '@/lib/supabase'; // Asegúrate de importar tu cliente supabase
+import { createClient } from '@/utils/supabase/client';
 
 interface PerfilContextType {
   perfil: PerfilUsuario | null;
@@ -17,34 +17,25 @@ export const PerfilProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const loadPerfil = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await obtenerPerfilUsuario();
-      setPerfil(data);
-    } catch (e) {
-      console.error("Error cargando perfil global:", e);
-      setPerfil(null);
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    const data = await obtenerPerfilUsuario();
+    setPerfil(data);
+    setLoading(false);
   }, []);
 
   useEffect(() => {
-    // 1. Carga inicial
+    const supabase = createClient();
     loadPerfil();
 
-    // 2. Escuchar cambios de autenticación (Login/Logout)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        loadPerfil();
-      } else if (event === 'SIGNED_OUT') {
-        setPerfil(null);
-      }
-    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+  if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+    loadPerfil();
+  } else if (event === 'SIGNED_OUT') {
+    setPerfil(null);
+  }
+});
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, [loadPerfil]);
 
   return (
@@ -56,8 +47,6 @@ export const PerfilProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const usePerfil = () => {
   const context = useContext(PerfilContext);
-  if (!context) {
-    throw new Error('usePerfil debe ser usado dentro de un PerfilProvider');
-  }
+  if (!context) throw new Error('usePerfil debe ser usado dentro de un PerfilProvider');
   return context;
 };

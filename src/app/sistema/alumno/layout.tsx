@@ -1,24 +1,20 @@
-import Sidebar from '../../components/alumno/Navbar';
+import SidebarAlumno from '../../components/alumno/Navbar'; // Tu sidebar de alumno
 
-export default function ProfesorLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AlumnoLayout({ children }: { children: React.ReactNode }) {
   return (
-    // 'flex' establece el eje horizontal (Sidebar a la izq, Main a la der)
-    // 'min-h-screen' asegura que ocupe toda la altura de la pantalla
-    <div className="flex min-h-screen bg-slate-50">
+    // 'flex' permite que el Sidebar y el Main vivan lado a lado
+    <div className="min-h-screen bg-slate-50 flex">
       
-      {/* 1. Sidebar con ancho fijo y flex-shrink-0 para que no se comprima */}
-      <aside className="w-64 flex-shrink-0 hidden md:block border-r border-slate-200">
-        <Sidebar />
-      </aside>
+      {/* Sidebar fijo a la izquierda */}
+      <div className="w-64 fixed inset-y-0 left-0 hidden md:block z-10">
+        <SidebarAlumno />
+      </div>
 
-      {/* 2. Main content toma el espacio restante con flex-1 */}
-      {/* 'overflow-x-hidden' evita que la tabla o gráficas rompan el layout */}
-      <main className="flex-1 w-full overflow-x-hidden p-4 md:p-8">
-        {children}
+      {/* Área principal: el pl-64 reserva el espacio para el sidebar */}
+      <main className="flex-1 w-full md:pl-64 transition-all duration-300">
+        <div className="p-4 md:p-8">
+          {children}
+        </div>
       </main>
     </div>
   );
