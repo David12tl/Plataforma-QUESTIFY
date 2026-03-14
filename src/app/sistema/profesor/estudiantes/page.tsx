@@ -3,27 +3,32 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
 
-// --- Interfaces para Tipado Estricto ---
-interface Usuario {
-  id_usuario: string;
-  nombre_completo: string;
-  email: string;
-}
-
+// --- 1. Interfaces para el uso dentro del componente (Limpias) ---
 interface EstudianteProcesado {
   id: string;
   name: string;
   email: string;
 }
 
-interface InscripcionRaw {
-  id_clase: number;
-  clases: { nombre_materia: string } | null;
-  usuarios: Usuario | null;
-}
-
 interface DataPorClase {
   [materia: string]: EstudianteProcesado[];
+}
+
+// --- 2. Interfaces para la respuesta CRUDA de Supabase (Evita el 'any') ---
+interface UsuarioRaw {
+  id_usuario: string;
+  nombre_completo: string;
+  email: string;
+}
+
+interface ClaseRaw {
+  nombre_materia: string;
+}
+
+interface InscripcionRaw {
+  id_clase: number;
+  clases: ClaseRaw | ClaseRaw[] | null;
+  usuarios: UsuarioRaw | UsuarioRaw[] | null;
 }
 
 export default function StudentsPage() {
@@ -34,31 +39,37 @@ export default function StudentsPage() {
   const loadEstudiantes = useCallback(async () => {
     setLoading(true);
     
-    // Tipado con .returns para asegurar la estructura de datos
     const { data, error } = await supabase
       .from('inscripciones')
       .select(`
         id_clase,
-        clases(nombre_materia),
-        usuarios(id_usuario, nombre_completo, email)
-      `)
-      .returns<InscripcionRaw[]>();
+        clases ( nombre_materia ),
+        usuarios ( id_usuario, nombre_completo, email )
+      `);
 
     if (error) {
       console.error("Error al cargar estudiantes:", error.message);
     } else if (data) {
-      const agrupado = data.reduce((acc: DataPorClase, curr: InscripcionRaw) => {
-        const materia = curr.clases?.nombre_materia || 'Sin Materia';
+      // Forzamos el tipo a nuestra interfaz de respuesta cruda
+      const rawData = data as unknown as InscripcionRaw[];
+
+      const agrupado = rawData.reduce((acc: DataPorClase, curr: InscripcionRaw) => {
+        // Normalizar Clases (Supabase puede devolver objeto o array)
+        const claseInfo = Array.isArray(curr.clases) ? curr.clases[0] : curr.clases;
+        const materia = claseInfo?.nombre_materia || 'Sin Materia';
         
+        // Normalizar Usuarios
+        const usuarioInfo = Array.isArray(curr.usuarios) ? curr.usuarios[0] : curr.usuarios;
+
         if (!acc[materia]) {
           acc[materia] = [];
         }
         
-        if (curr.usuarios) {
+        if (usuarioInfo) {
           acc[materia].push({
-            id: curr.usuarios.id_usuario,
-            name: curr.usuarios.nombre_completo,
-            email: curr.usuarios.email,
+            id: usuarioInfo.id_usuario,
+            name: usuarioInfo.nombre_completo,
+            email: usuarioInfo.email,
           });
         }
         return acc;
@@ -74,7 +85,6 @@ export default function StudentsPage() {
   }, [loadEstudiantes]);
 
   return (
-    // Ya no contiene Sidebar ni flex local; el layout padre los provee.
     <div className="w-full">
       <header className="mb-8 md:mb-10">
         <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-[#1c1917]">
@@ -93,18 +103,17 @@ export default function StudentsPage() {
       ) : Object.keys(dataPorClase).length > 0 ? (
         Object.entries(dataPorClase).map(([clase, estudiantes]) => (
           <section key={clase} className="mb-10 bg-white border-4 border-[#1c1917] shadow-[6px_6px_0px_0px_#1c1917] overflow-hidden">
-            <div className="bg-[#1c1917] p-4">
+            <div className="bg-[#1c1917] p-4 flex justify-between items-center">
               <h3 className="text-lg font-black uppercase text-[#f97316]">
                 {clase}
               </h3>
-              <span className="text-[10px] text-white/60 font-bold uppercase">
-                {estudiantes.length} Alumnos inscritos
+              <span className="text-[10px] text-white font-black uppercase border border-white/20 px-2 py-1">
+                {estudiantes.length} Alumnos
               </span>
             </div>
             
             <div className="p-4 md:p-6">
-              {/* Vista de Tabla para Escritorio */}
-              <div className="hidden md:block overflow-x-auto">
+              <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="text-[10px] uppercase text-slate-400 border-b-2 border-slate-100">
@@ -116,8 +125,8 @@ export default function StudentsPage() {
                   <tbody className="divide-y divide-slate-100">
                     {estudiantes.map((s) => (
                       <tr key={s.id} className="group hover:bg-slate-50 transition-colors">
-                        <td className="py-4 font-bold text-[#1c1917]">{s.name}</td>
-                        <td className="py-4 text-slate-500 font-medium">{s.email}</td>
+                        <td className="py-4 font-bold text-[#1c1917] uppercase text-sm">{s.name}</td>
+                        <td className="py-4 text-slate-500 font-medium text-sm">{s.email}</td>
                         <td className="py-4 text-right">
                           <button className="text-[10px] font-black uppercase text-[#f97316] hover:underline">Ver Perfil</button>
                         </td>
@@ -126,21 +135,11 @@ export default function StudentsPage() {
                   </tbody>
                 </table>
               </div>
-
-              {/* Vista de Tarjetas para Móvil */}
-              <div className="md:hidden space-y-4">
-                {estudiantes.map((s) => (
-                  <div key={s.id} className="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
-                    <p className="font-black uppercase text-sm text-[#1c1917]">{s.name}</p>
-                    <p className="text-xs text-slate-500 mb-2">{s.email}</p>
-                  </div>
-                ))}
-              </div>
             </div>
           </section>
         ))
       ) : (
-        <div className="p-12 border-4 border-dashed border-slate-200 text-center">
+        <div className="p-12 border-4 border-dashed border-slate-200 text-center bg-white">
           <p className="text-slate-400 font-black uppercase tracking-widest text-sm">
             No hay estudiantes inscritos en ninguna materia.
           </p>

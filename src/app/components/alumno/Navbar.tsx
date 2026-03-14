@@ -28,6 +28,7 @@ const Sidebar = () => {
     { name: 'Home', icon: 'home', href: '/sistema/alumno' },
     { name: 'Calendar', icon: 'calendar_today', href: '/sistema/alumno/calendario' },
     { name: 'Classes', icon: 'school', href: '/sistema/alumno/clases' },
+    { name: 'Calificaciones', icon: 'school', href: '/sistema/alumno/calificaciones' },
     { name: 'Team', icon: 'groups', href: '/sistema/alumno/team' },
     { name: 'Settings', icon: 'settings', href: '/sistema/alumno/ajustes' },
   ];

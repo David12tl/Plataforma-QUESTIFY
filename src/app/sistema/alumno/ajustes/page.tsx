@@ -1,13 +1,10 @@
 'use client';
 
 import React from 'react';
-import Sidebar from '../../../components/alumno/Navbar';
 
 export default function SettingsPage() {
   return (
     <div className="flex min-h-screen bg-slate-50 font-syne text-[#1c1917]">
-      <Sidebar />
-      
       <main className="flex-1 p-8">
         <header className="mb-10">
           <h2 className="text-5xl font-black uppercase tracking-tighter">Ajustes</h2>
