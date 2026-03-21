@@ -9,6 +9,10 @@
     "start": "next start",
     "lint": "next lint"
   },
+  "scripts": {
+  "dev": "next dev",
+  "test:e2e": "node tests/login.test.js"
+},
   "dependencies": {
     "@fullcalendar/core": "^6.1.20",
     "@fullcalendar/daygrid": "^6.1.20",
@@ -20,7 +24,8 @@
     "next": "^16.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "recharts": "^3.8.0"
+    "recharts": "^3.8.0",
+    "selenium-webdriver": "^4.41.0"
   },
   "devDependencies": {
     "@tailwindcss/container-queries": "^0.1.1",
